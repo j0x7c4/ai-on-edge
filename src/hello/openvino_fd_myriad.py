@@ -3,7 +3,7 @@ import sys
 import logging
 import time
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s', level=logging.DEBUG)
 
 # Load the model
 t = time.time()
