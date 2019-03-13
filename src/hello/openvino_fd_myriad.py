@@ -7,7 +7,7 @@ net = cv.dnn.readNet('models/hello/face-detection-adas-0001.xml', 'models/hello/
 net.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
       
 # Read an image 
-frame = cv.imread('data/hello/in.png')
+frame = cv.imread(sys.argv[1])
       
 # Prepare input blob and perform an inference 
 blob = cv.dnn.blobFromImage(frame, size=(672, 384), ddepth=cv.CV_8U) net.setInput(blob) 
