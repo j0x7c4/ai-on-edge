@@ -1,8 +1,11 @@
 import cv2 as cv
 import sys
+import logging
+import time
 # Load the model 
+t = time.time()
 net = cv.dnn.readNet('models/hello/face-detection-adas-0001.xml', 'models/hello/face-detection-adas-0001.bin') 
-
+logging.info("load model cost %f" % (time.time() - t))
 # Specify target device 
 net.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
       
@@ -10,9 +13,12 @@ net.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
 frame = cv.imread(sys.argv[1])
       
 # Prepare input blob and perform an inference 
-blob = cv.dnn.blobFromImage(frame, size=(672, 384), ddepth=cv.CV_8U) net.setInput(blob) 
+t = time.time()
+blob = cv.dnn.blobFromImage(frame, size=(672, 384), ddepth=cv.CV_8U)
+net.setInput(blob) 
 out = net.forward()
-      
+logging.info("inference cost %f" % (time.time() - t))
+
 # Draw detected faces on the frame 
 for detection in out.reshape(-1, 7): 
     confidence = float(detection[2]) 
