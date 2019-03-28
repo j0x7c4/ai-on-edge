@@ -17,10 +17,6 @@ logging.info("load model cost %f" % (time.time() - t))
 # Specify target device
 net.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
 
-# init pwm
-pwm = PCA9685(0x40)
-pwm.setPWMFreq(50)
-
 screen_size = (640, 480)
 
 def run_camera(q):
@@ -81,12 +77,38 @@ def run_camera(q):
             break
 
 def run_move(q):
+    channel_yaw = 7
+    channel_pitch = 15
+    pos_yaw = 500
+    pos_pitch = 500
+    default_step = 100
+    # init pwm
+    pwm = PCA9685(0x40)
+    pwm.setPWMFreq(50)
+    pwm.setServoPulse(channel_yaw, pos_yaw)
+    pwm.setServoPulse(channel_pitch, pos_pitch)
+
     while True:
         data = q.get()
+        logging.debug("move=%s" % str(data))
         if data == 'exit':
             break
-        logging.debug("move=%s" % str(data))
-    
+        if data == "left":
+            pos_yaw += default_step
+            pos_yaw = min(max(500, pos_yaw), 2500)
+            pwm.setServoPulse(channel_yaw, pos_yaw)
+        if data == "right":
+            pos_yaw -= default_step
+            pos_yaw = min(max(500, pos_yaw), 2500)
+            pwm.setServoPulse(channel_yaw, pos_yaw)
+        if data == "up":
+            pos_pitch += default_step
+            pos_pitch = min(max(500, pos_pitch), 2500)
+            pwm.setServoPulse(channel_pitch, pos_pitch)
+        if data == "down":
+            pos_pitch -= default_step
+            pos_pitch = min(max(500, pos_pitch), 2500)
+            pwm.setServoPulse(channel_pitch, pos_pitch)
 
 q = Queue()
 t1 = Thread(target=run_move, args=(q,))
