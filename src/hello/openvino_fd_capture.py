@@ -85,7 +85,7 @@ def run_move(q):
         data = q.get()
         if data == 'exit':
             break
-        logging.debug("move", data)
+        logging.debug("move=%s" % str(data))
     
 
 q = Queue()
