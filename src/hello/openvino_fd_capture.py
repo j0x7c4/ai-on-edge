@@ -64,10 +64,18 @@ def run_camera(q):
         # show the frame
         cv.imshow("Frame", image)
         key = cv.waitKey(1) & 0xFF
-        logging.info("key", key)
+        # logging.info("key", key)
         # clear the stream in preparation for the next frame
         rawCapture.truncate(0)
         # if the `q` key was pressed, break from the loop
+        if key == 81:
+            q.put("left")
+        if key == 82:
+            q.put("up")
+        if key == 83:
+            q.put("right")
+        if key == 84:
+            q.put("down")
         if key == ord("q"):
             q.put("exit")
             break
