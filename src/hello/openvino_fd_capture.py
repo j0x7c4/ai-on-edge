@@ -64,7 +64,7 @@ def run_camera(q):
         # show the frame
         cv.imshow("Frame", image)
         key = cv.waitKey(1) & 0xFF
-        # logging.info("key", key)
+        logging.debug("key=%s" % key)
         # clear the stream in preparation for the next frame
         rawCapture.truncate(0)
         # if the `q` key was pressed, break from the loop
@@ -85,7 +85,7 @@ def run_move(q):
         data = q.get()
         if data == 'exit':
             break
-        logging.info("move", data)
+        logging.debug("move", data)
     
 
 q = Queue()
