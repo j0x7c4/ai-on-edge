@@ -8,7 +8,7 @@ from utils.PCA9685 import PCA9685
 from queue import Queue
 from threading import Thread
 
-logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s', level=logging.INFO)
 
 # Load the model
 t = time.time()
@@ -40,7 +40,7 @@ def run_camera(q):
         blob = cv.dnn.blobFromImage(image, size=(672, 384), ddepth=cv.CV_8U)
         net.setInput(blob)
         out = net.forward()
-        logging.info("inference cost %f" % (time.time() - t))
+        logging.debug("inference cost %f" % (time.time() - t))
 
         # Draw detected faces on the image
         for detection in out.reshape(-1, 7):
@@ -50,8 +50,18 @@ def run_camera(q):
             xmax = int(detection[5] * image.shape[1])
             ymax = int(detection[6] * image.shape[0])
 
+            x_mid = (xmin+xmax)/2
+            y_mid = (ymin+ymax)/2
             if confidence > 0.5:
-                q.put(detection)
+                if ymin > image.shape[1]/2:
+                    q.put("down")
+                if ymax < image.shape[1]/2:
+                    q.put("up")
+                if xmin > image.shape[0]/2:
+                    q.put("right")
+                if xmax < image.shape[0]/2:
+                    q.put("left")
+                logging.debug("xmin=%s, ymin=%s, xmax=%s, ymax=%s"%(xmin, ymin, xmax, ymax))
                 cv.rectangle(image, (xmin, ymin), (xmax, ymax), color=(0, 255, 0))
 
         # Save the frame to an image file
@@ -79,9 +89,11 @@ def run_camera(q):
 def run_move(q):
     channel_yaw = 7
     channel_pitch = 15
-    pos_yaw = 500
-    pos_pitch = 500
+    pos_yaw = 1400
+    pos_pitch = 1400
     default_step = 100
+    max_pos = 2400
+    min_pos = 600
     # init pwm
     pwm = PCA9685(0x40)
     pwm.setPWMFreq(50)
@@ -90,25 +102,26 @@ def run_move(q):
 
     while True:
         data = q.get()
-        logging.debug("move=%s" % str(data))
+        logging.info("move=%s" % str(data))
         if data == 'exit':
             break
-        if data == "left":
+        elif data == "left":
             pos_yaw += default_step
-            pos_yaw = min(max(500, pos_yaw), 2500)
+            pos_yaw = min(max(min_pos, pos_yaw), max_pos)
             pwm.setServoPulse(channel_yaw, pos_yaw)
-        if data == "right":
+        elif data == "right":
             pos_yaw -= default_step
-            pos_yaw = min(max(500, pos_yaw), 2500)
+            pos_yaw = min(max(min_pos, pos_yaw), max_pos)
             pwm.setServoPulse(channel_yaw, pos_yaw)
-        if data == "up":
+        elif data == "up":
             pos_pitch += default_step
-            pos_pitch = min(max(500, pos_pitch), 2500)
+            pos_pitch = min(max(min_pos, pos_pitch), max_pos)
             pwm.setServoPulse(channel_pitch, pos_pitch)
-        if data == "down":
+        elif data == "down":
             pos_pitch -= default_step
-            pos_pitch = min(max(500, pos_pitch), 2500)
+            pos_pitch = min(max(min_pos, pos_pitch), max_pos)
             pwm.setServoPulse(channel_pitch, pos_pitch)
+        logging.debug("pos_yaw=%s,pos_pitch=%s" % (pos_yaw, pos_pitch))
 
 q = Queue()
 t1 = Thread(target=run_move, args=(q,))
